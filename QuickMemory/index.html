@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game for Kids</title>
+    <style>
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .shapes-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .shape {
+            width: 150px;
+            height: 150px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .shape:hover {
+            transform: scale(1.05);
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .game-state {
+            position: fixed;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+        .text-success {
+            color: #45a049;
+        }
+        .text-danger {
+            color: #e71111;
+        }
+    </style>    
+    <script src="../js/js-confetti.browser.js"></script>
+    <script src="../js/vue.global.prod.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="game-container" @click="handleClick">
+            <div class="game-screen">
+                <div class="score">Score: {{ score }}</div>
+                <div class="shapes-container">
+                    <div
+                        v-for="(shape, index) in shapes"
+                        :key="index"
+                        class="shape"
+                        :style="getShapeStyle(shape)"
+                        @click.stop="handleShapeClick(shape)"
+                    >
+                        <component :is="shape.type" :color="shape.color" />
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="gameOver" class="game-state">
+                <h2>Game Over!</h2>
+                <p>Your final score: {{ score }}</p>
+                <button @click="restartGame">Restart Game</button>
+            </div>
+            <div v-else class="game-state">
+                <h2 :class="`text-${message.startsWith('Great')?'success':'danger'}`">{{ message }}</h2>
+                <button @click="checkShapes">Check</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+        const jsConfetti = new JSConfetti();
+
+        const svgShapes = {
+            Circle: {
+                viewBox: '0 0 100 100',
+                template: `<svg :viewBox="viewBox" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" :fill="color" /></svg>`,
+            },
+            Square: {
+                viewBox: '0 0 100 100',
+                template: `<svg :viewBox="viewBox" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="20" width="60" height="60" :fill="color" /></svg>`,
+            },
+            Triangle: {
+                viewBox: '0 0 100 100',
+                template: `<svg :viewBox="viewBox" xmlns="http://www.w3.org/2000/svg"><polygon points="50,15 90,85 10,85" :fill="color" /></svg>`,
+            },
+        };
+
+        const app = createApp({
+            components: {
+                Circle: {
+                    props: ['color'],
+                    template: svgShapes.Circle.template,
+                    data() {
+                        return { viewBox: svgShapes.Circle.viewBox };
+                    },
+                },
+                Square: {
+                    props: ['color'],
+                    template: svgShapes.Square.template,
+                    data() {
+                        return { viewBox: svgShapes.Square.viewBox };
+                    },
+                },
+                Triangle: {
+                    props: ['color'],
+                    template: svgShapes.Triangle.template,
+                    data() {
+                        return { viewBox: svgShapes.Triangle.viewBox };
+                    },
+                },
+            },
+            setup() {
+                const gameStarted = ref(false);
+                const gameOver = ref(false);
+                const score = ref(0);
+                const message = ref('');
+                const shapes = ref([]);
+                const shapeTypes = ['Circle', 'Square', 'Triangle'];
+
+                const getRandomColor = () => {
+                    /*const letters = '0123456789ABCDEF';
+                    let color = '#';
+                    for (let i = 0; i < 6; i++) {
+                        color += letters[Math.floor(Math.random() * 16)];
+                    }
+                    return color;*/
+                    const colors = ['red', 'green', 'blue', 'yellow', 'purple', 'brown', 'violet', 'cyan'];
+                    return colors[Math.floor(Math.random()*colors.length)];
+                };
+
+                const shuffleArray = (array) => {
+                    return [...array].sort(() => Math.random() - 0.5);
+                };
+
+                const generateShapes = (count) => {
+                    const newShapes = [];
+                    const type = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+                    const color = getRandomColor();
+                    
+                    // Create the target shape
+                    newShapes.push({
+                        id: 0,
+                        type,
+                        color,
+                        isTarget: true
+                    });
+
+                    // Create empty shapes
+                    for (let i = 1; i < count; i++) {
+                        newShapes.push({
+                            id: i,
+                            type,
+                            color: 'transparent',
+                            isTarget: false
+                        });
+                    }
+
+                    return shuffleArray(newShapes);
+                };
+
+                const startGame = () => {
+                    gameStarted.value = true;
+                    score.value = 0;
+                    gameOver.value = false;
+                    shapes.value = generateShapes(3);
+                };
+
+                const restartGame = () => {
+                    startGame();
+                };
+
+                const handleShapeClick = (shape) => {
+                    if (shape.isTarget) return;
+                    shape.color = getRandomColor();
+                };
+
+                const checkShapes = () => {
+                    const targetShape = shapes.value.find(s => s.isTarget);
+                    if (shapes.value.every(s => s.color == targetShape.color)) {
+                        jsConfetti.addConfetti();
+                        score.value += 10;
+                        localStorage.setItem('store', score.value);
+                        message.value = 'Great job! +10 points!';
+                        setTimeout(() => {
+                            shapes.value = generateShapes(3);
+                            message.value = '';
+                        }, 2000);
+                    } else {
+                        message.value = 'Oops! Try again!';
+                        setTimeout(() => {
+                            shapes.value = generateShapes(3);
+                            message.value = '';
+                        }, 800);
+                    }
+                }
+
+                const getShapeStyle = (shape) => {
+                    return {
+                        cursor: shape.isTarget ? 'default' : 'pointer',
+                        border: '2px solid #333'
+                    };
+                };
+
+                startGame();
+                return {
+                    gameStarted,
+                    gameOver,
+                    score,
+                    message,
+                    shapes,
+                    startGame,
+                    restartGame,
+                    handleShapeClick,
+                    checkShapes,
+                    getShapeStyle
+                };
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

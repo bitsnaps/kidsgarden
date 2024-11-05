@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Portal</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 800px;
+        }
+
+        .game-button {
+            width: 200px;
+            height: 200px;
+            border: none;
+            border-radius: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-button:hover {
+            transform: translateY(-5px);
+        }
+
+        #game01 {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+        }
+
+        #game02 {
+            background: linear-gradient(45deg, #4834d4, #686de0);
+        }
+
+        #game03 {
+            background: linear-gradient(45deg, #6ab04c, #badc58);
+        }
+
+        #game04 {
+            background: linear-gradient(45deg, #be2edd, #e056fd);
+        }
+        #game05 {
+            background: linear-gradient(45deg, #c52de7, #de62f7);
+        }
+        #game06 {
+            background: linear-gradient(45deg, #d8774b, #ff831e);
+        }
+        .ball {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <h1>Game Portal</h1>
+    <div class="grid">
+        <a href="/AlphaPuzzle"><button class="game-button" id="game01">Alpha Puzzle</button></a>
+        <a href="/ColoredShape"><button class="game-button" id="game02">Colored Shape</button></a>
+        <a href="/MemoryShapes"><button class="game-button" id="game03">Memory Shapes</button></a>
+        <a href="/ShapePuzzle"><button class="game-button" id="game04">Shaped Puzzle</button></a>
+        <a href="/tetris"><button class="game-button" id="game05">Tetris Game</button></a>
+        <a href="/snake"><button class="game-button" id="game06">Snake Game</button></a>
+    </div>
+
+    <script>
+(function createBouncingBall() {
+    const ball = document.createElement('div');
+    ball.className = 'ball';
+    document.body.appendChild(ball);
+
+    let x = Math.random() * window.innerWidth;
+    let y = Math.random() * window.innerHeight;
+    let dx = (Math.random() - 0.5) * 5;
+    let dy = (Math.random() - 0.5) * 5;
+    let speed = 1;
+    
+    // Get initial size from localStorage or default to 20
+    const score = localStorage.getItem('score') || 20;
+    const initialSize = Math.max(20, Math.min(parseInt(score), 100));
+    
+    const games = ['/puzzle', '/memory', '/snake', '/tetris'];
+    
+    ball.style.cursor = 'pointer';
+    ball.style.pointerEvents = 'auto';
+    ball.addEventListener('click', () => {
+        const randomGame = games[Math.floor(Math.random() * games.length)];
+        window.location.href = randomGame;
+    });
+
+    function randomColor() {
+        const colors = [
+            '#ff6b6b', '#feca57', '#4834d4', '#686de0',
+            '#6ab04c', '#badc58', '#be2edd', '#e056fd'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function updateBall() {
+        if (x + ball.offsetWidth > window.innerWidth || x < 0) {
+            dx = -dx;
+            ball.style.backgroundColor = randomColor();
+            ball.style.width = ball.style.height = initialSize + 'px';
+            speed += 0.01;
+        }
+        if (y + ball.offsetHeight > window.innerHeight || y < 0) {
+            dy = -dy;
+            ball.style.backgroundColor = randomColor();
+            ball.style.width = ball.style.height = initialSize + 'px';
+            speed += 0.01;
+        }
+
+        x += dx * speed;
+        y += dy * speed;
+
+        ball.style.left = x + 'px';
+        ball.style.top = y + 'px';
+
+        requestAnimationFrame(updateBall);
+    }
+
+    ball.style.backgroundColor = randomColor();
+    ball.style.width = ball.style.height = initialSize + 'px';
+    updateBall();
+})();
+</script>    
+</body>
+</html>

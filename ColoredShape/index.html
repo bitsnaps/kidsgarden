@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Coloring Game</title>
+    <link rel="stylesheet" href="../css/bulma.min.css">
+    <style>
+        .game-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px;
+            flex-wrap: wrap;
+        }
+        .drawing-area {
+            /* border: 2px solid #ddd;
+            border-radius: 8px; */
+            margin: 10px;
+            padding: 10px;
+        }
+        .color-picker {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px;
+        }
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            cursor: pointer;
+        }
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <section class="section">
+            <div class="container">
+                <h1 class="title has-text-centered">Coloring Shapes</h1>
+                <div class="has-text-centered">
+                    <p class="is-size-4">Score: {{ score }}</p>
+                </div>
+                
+                <div class="game-container">
+                    <div class="drawing-area" id="target-shape"></div>
+                    <div class="drawing-area" id="user-shape"></div>
+                </div>
+
+                <div class="color-picker" v-if="!message">
+                    <button 
+                        v-for="color in colors" 
+                        :key="color"
+                        class="color-btn"
+                        :style="{ backgroundColor: color }"
+                        @click="selectColor(color)">
+                    </button>
+                </div>
+
+                <div class="has-text-centered">
+                    <h2 :class="`title is-size-4 has-text-${message.startsWith('Great')?'success':'danger'}`">{{ message }}</h2>
+                    <br>
+                    <button class="button is-primary is-large has-text-light" :disabled="message.length" @click="newGame">New Shape</button>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script src="../js/svg.min.js"></script>
+    <script src="../js/js-confetti.browser.js"></script>
+    <script src="../js/vue.global.prod.js"></script>
+    <script>
+        const { ref, createApp } = Vue;
+        const jsConfetti = new JSConfetti();
+
+        createApp({
+            data() {
+                return {
+                    score: 0,
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'],
+                    targetColor: '',
+                    userDrawing: null,
+                    targetDrawing: null,
+                    currentShape: null,
+                    message: ref('')
+                }
+            },
+            mounted() {
+                this.initializeDrawings();
+                this.newGame();
+            },
+            methods: {
+                initializeDrawings() {
+                    const size = 250;
+                    this.targetDrawing = SVG().addTo('#target-shape').size(size, size);
+                    this.userDrawing = SVG().addTo('#user-shape').size(size, size);
+                },
+                getRandomShape() {
+                    const shapes = [
+                        // Star shape points
+                        'M 100 10 L 120 90 L 200 90 L 140 140 L 160 220 L 100 170 L 40 220 L 60 140 L 0 90 L 80 90 Z',
+                        // Heart shape points
+                        'M 100 190 C 60 150 0 120 0 60 C 0 30 30 0 60 0 C 80 0 100 20 100 20 C 100 20 120 0 140 0 C 170 0 200 30 200 60 C 200 120 140 150 100 190 Z',
+                        // Simple house
+                        'M 20 200 L 20 80 L 100 10 L 180 80 L 180 200 Z M 70 200 L 70 120 L 130 120 L 130 200 Z',
+                    ]
+                    return shapes[Math.floor(Math.random() * shapes.length)]
+                },
+                drawShape(draw, pathString, color = 'none') {
+                    draw.clear()
+                    return draw.path(pathString)
+                        .fill(color)
+                        .stroke({ color: '#000', width: 2 })
+                },
+                newGame() {
+                    const shapePath = this.getRandomShape()
+                    this.targetColor = this.colors[Math.floor(Math.random() * this.colors.length)]
+                    
+                    // Draw target shape (colored)
+                    this.drawShape(this.targetDrawing, shapePath, this.targetColor)
+                    
+                    // Draw user shape (empty)
+                    this.currentShape = this.drawShape(this.userDrawing, shapePath)
+                },
+                selectColor(color) {
+                    if (!this.currentShape) return
+                    
+                    this.currentShape.fill(color)
+                    
+                    // Check if colors match
+                    if (color === this.targetColor) {
+                        this.message = 'Great job! +10 points!';
+                        jsConfetti.addConfetti();
+                        this.score += 10;
+                        setTimeout(() => {
+                            this.message = '';                            
+                            this.newGame();
+                        }, 2000)
+                    } else {
+                        this.message = 'Oops! Try again!';
+                        setTimeout(() => {
+                            this.message = '';                            
+                            this.newGame();
+                        }, 800)
+
+                    }
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
+                        

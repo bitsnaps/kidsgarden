@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Memory Shapes Game</title>
+    <script src="../js/vue.global.prod.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #c2e59c, #64b3f4);
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #2c3e50;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+        }
+
+        .score-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-label {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            perspective: 1000px;
+        }
+
+        .card {
+            position: relative;
+            height: 120px;
+            width: 120px;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transform: scale(0.97);
+            transition: transform 0.5s;
+        }
+
+        .card:hover {
+            transform: scale(1);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-front {
+            background: linear-gradient(45deg, #fff, #f1f1f1);
+            transform: rotateY(180deg);
+        }
+
+        .card-back {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+
+        .shape {
+            width: 60%;
+            height: 60%;
+        }
+
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .btn {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            background: #27ae60;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .matched {
+            animation: celebrate 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="game-container">
+            <div class="header">
+                <h1>Memory Shapes</h1>
+            </div>
+            <div class="score-board">
+                <div class="score-item">
+                    <div class="score-label">Score</div>
+                    <div class="score-value">{{ score }}</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Level</div>
+                    <div class="score-value">{{ level }}</div>
+                </div>
+            </div>
+            <div class="game-grid">
+                <div v-for="(card, index) in cards" 
+                     :key="index" 
+                     class="card" 
+                     :class="{ flipped: card.isFlipped, matched: card.isMatched }"
+                     @click="flipCard(index)">
+                    <div class="card-face card-front">
+                        <svg class="shape" :style="{ fill: card.color }" v-html="card.shape"></svg>
+                    </div>
+                    <div class="card-face card-back"></div>
+                </div>
+            </div>
+            <div class="message" v-if="showMessage">
+                <h2>{{ message }}</h2>
+                <br>
+                <button class="btn" @click="startNewGame">Next Level</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// Add this before closing </body> tag
+const { ref, onMounted, watch } = Vue;
+
+const app = Vue.createApp({
+    setup() {
+        const score = ref(0);
+        const level = ref(1);
+        const cards = ref([]);
+        const flippedCards = ref([]);
+        const showMessage = ref(false);
+        const message = ref('');
+        let canFlip = true;
+
+        const shapes = [
+            '<circle cx="50%" cy="50%" r="40%"/>',
+            '<rect x="10%" y="10%" width="80%" height="80%"/>',
+            '<polygon points="50,10 90,90 10,90"/>',
+            '<ellipse cx="50%" cy="50%" rx="45%" ry="30%"/>',
+            '<path d="M20,20 L80,20 L50,80 Z"/>',
+            '<path d="M50,20 A30,30 0 1,1 50,80 A30,30 0 1,1 50,20"/>',
+            '<path d="M20,50 Q50,20 80,50 T80,80"/>',
+            '<path d="M30,20 H70 V70 H30 Z"/>',
+            '<polygon points="50,10 90,50 50,90 10,50"/>',
+            '<path d="M20,20 h60 a20,20 0 0 1 0,60 h-60 a20,20 0 0 1 0,-60"/>'
+        ];
+
+        const colors = [
+            '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', 
+            '#9b59b6', '#e67e22', '#1abc9c', '#34495e',
+            '#d35400', '#27ae60'
+        ];
+
+        const generateCards = () => {
+            const numPairs = Math.min(level.value + 2, 10);
+            const selectedShapes = shapes
+                .sort(() => Math.random() - 0.5)
+                .slice(0, numPairs);
+            
+            const cardPairs = selectedShapes.flatMap(shape => {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                return [
+                    { shape, color, isFlipped: false, isMatched: false },
+                    { shape, color, isFlipped: false, isMatched: false }
+                ];
+            });
+
+            cards.value = cardPairs.sort(() => Math.random() - 0.5);
+        };
+
+        const flipCard = (index) => {
+            if (!canFlip || cards.value[index].isFlipped || cards.value[index].isMatched) return;
+
+            cards.value[index].isFlipped = true;
+            flippedCards.value.push(index);
+
+            if (flippedCards.value.length === 2) {
+                canFlip = false;
+                checkMatch();
+            }
+        };
+
+        const checkMatch = () => {
+            const [firstIndex, secondIndex] = flippedCards.value;
+            const firstCard = cards.value[firstIndex];
+            const secondCard = cards.value[secondIndex];
+
+            if (firstCard.shape === secondCard.shape && firstCard.color === secondCard.color) {
+                cards.value[firstIndex].isMatched = true;
+                cards.value[secondIndex].isMatched = true;
+                score.value += 100 * level.value;
+                
+                if (cards.value.every(card => card.isMatched)) {
+                    setTimeout(() => {
+                        message.value = `Level ${level.value} Complete! Score: ${score.value}`;
+                        showMessage.value = true;
+                    }, 500);
+                }
+            }
+
+            setTimeout(() => {
+                if (!cards.value[firstIndex].isMatched) {
+                    cards.value[firstIndex].isFlipped = false;
+                    cards.value[secondIndex].isFlipped = false;
+                }
+                flippedCards.value = [];
+                canFlip = true;
+            }, 1000);
+        };
+
+        const startNewGame = () => {
+            level.value++;
+            showMessage.value = false;
+            generateCards();
+        };
+
+        onMounted(() => {
+            generateCards();
+        });
+
+        return {
+            score,
+            level,
+            cards,
+            showMessage,
+            message,
+            flipCard,
+            startNewGame
+        };
+    }
+}).mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf8"/>
+  <title>AlphaPuzzle</title>
+  <link rel="stylesheet" href="../css/bulma.min.css">
+<style>
+.box {
+  cursor: pointer;
+  width: 200px;
+  height: 200px;
+}
+
+.box span {
+  display: block;
+}
+
+.column .box {
+  margin-bottom: 1rem;
+}
+</style>
+</head>
+<body>
+<div id="app">  
+  <div class="container">
+    <section class="section">
+      <h1 class="title">Shape Puzzle Game</h1>      
+      <div class="columns">
+        <!-- Info -->
+        <div class="column">
+          <h2 class="subtitle">Score: {{ score }}</h2>
+          <p>Drag and drop the right shape!</p>    
+        </div>
+      </div>
+      <div class="columns">
+        <!-- Draggable Shapes -->
+        <div class="column">
+          <h3 class="title is-4">Shapes</h3>
+          <div
+            v-for="(shape, index) in shapes"
+            :key="shape.name"
+            class="box has-text-centered"
+            draggable="true"
+            @dragstart="onDragStart($event, shape)"
+          >
+            <span :style="{ color: shape.color, fontSize: '4rem' }">
+              {{ shape.symbol }}
+            </span>
+            <p>{{ shape.name }}</p>
+          </div>
+        </div>
+        
+        <!-- Drop Zones -->
+        <div class="column">
+          <h3 class="title is-4">Match the Shapes</h3>
+          <div
+            v-for="(spot, index) in spots"
+            :key="spot.name"
+            class="box has-text-centered"
+            @dragover.prevent
+            @drop="onDrop($event, spot)"
+          >
+            <span :style="{ fontSize: '4rem', color: spot.shape?.color || 'black' }">
+              {{ spot.matched ? spot.shape.symbol : '?' }}
+            </span>
+            <p>{{ spot.name }}</p>
+          </div>
+        </div>
+      </div>
+      
+    </section>
+  </div>
+
+<script src="../js/js-confetti.browser.js"></script>
+<script src="../js/vue.global.prod.js"></script>
+<script>
+const jsConfetti = new JSConfetti();
+
+Vue.createApp({
+  data() {
+    return {
+      score: 0,
+      shapes: [
+        { name: 'Circle', symbol: '◯', color: 'red' },
+        { name: 'Square', symbol: '■', color: 'green' },
+        { name: 'Triangle', symbol: '▲', color: 'blue' },
+      ],
+      spots: [
+        { name: 'Place for Circle', shapeName: 'Circle', matched: false, shape: null },
+        { name: 'Place for Square', shapeName: 'Square', matched: false, shape: null },
+        { name: 'Place for Triangle', shapeName: 'Triangle', matched: false, shape: null },
+      ],
+      draggingShape: null,
+    };
+  },
+  methods: {
+    onDragStart(event, shape) {
+      this.draggingShape = shape;
+    },
+    onDrop(event, spot) {
+      if (this.draggingShape && !spot.matched) {
+        if (this.draggingShape.name === spot.shapeName) {
+          spot.matched = true;
+          spot.shape = this.draggingShape;
+          this.score += 10;
+        }
+      }
+      this.draggingShape = null;
+      if (this.score == 30){
+        jsConfetti.addConfetti();
+      }
+    },
+  },
+}).mount('#app');
+</script>
+</body>
+
+</html>
