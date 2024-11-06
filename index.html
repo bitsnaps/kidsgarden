@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="refresh" content="0; url=https://bitsnaps.github.io/kidsgarden/index.html">
     <title>Game Portal</title>
     <style>
         body {
@@ -103,7 +102,14 @@
     const score = localStorage.getItem('score') || 20;
     const initialSize = Math.max(20, Math.min(parseInt(score), 100));
     
-    const games = ['/puzzle', '/memory', '/snake', '/tetris'];
+    const games = [
+        './AlphaPuzzle/index.html', 
+        './ColoredShape/index.html', 
+        './MemoryShapes/index.html', 
+        './ShapePuzzle/index.html', 
+        './Snake/index.html', 
+        './Tetris/index.html'
+    ];
     
     ball.style.cursor = 'pointer';
     ball.style.pointerEvents = 'auto';
