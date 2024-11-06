@@ -100,23 +100,7 @@
     
     // Get initial size from localStorage or default to 20
     const score = localStorage.getItem('score') || 20;
-    const initialSize = Math.max(20, Math.min(parseInt(score), 100));
-    
-    const games = [
-        './AlphaPuzzle/index.html', 
-        './ColoredShape/index.html', 
-        './MemoryShapes/index.html', 
-        './ShapePuzzle/index.html', 
-        './Snake/index.html', 
-        './Tetris/index.html'
-    ];
-    
-    ball.style.cursor = 'pointer';
-    ball.style.pointerEvents = 'auto';
-    ball.addEventListener('click', () => {
-        const randomGame = games[Math.floor(Math.random() * games.length)];
-        window.location.href = randomGame;
-    });
+    const initialSize = Math.max(20, Math.min(parseInt(score), 100));    
 
     function randomColor() {
         const colors = [
