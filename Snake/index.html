@@ -188,6 +188,15 @@ document.querySelectorAll('.control-button').forEach(button => {
 });
 
 function changeDirection(newDirection) {
+    // Prevent 180-degree turns
+    if (
+        (direction === 'right' && newDirection === 'left') ||
+        (direction === 'left' && newDirection === 'right') ||
+        (direction === 'up' && newDirection === 'down') ||
+        (direction === 'down' && newDirection === 'up')
+    ) {
+        return;
+    }    
     direction = newDirection;
 }
 
