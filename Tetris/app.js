@@ -11,6 +11,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let nextPiece;
     let board = Array(200).fill(null);
 
+    document.getElementById('up').addEventListener('touchstart', () => doRotatePiece(currentPiece));
+    document.getElementById('down').addEventListener('touchstart', () => moveDown());
+    document.getElementById('left').addEventListener('touchstart', () => doMoveLeft(currentPiece));
+    document.getElementById('right').addEventListener('touchstart', () => doMoveRight(currentPiece));
+    
+    // Prevent scrolling when touching the buttons
+    document.querySelectorAll('.control-button').forEach(button => {
+        button.addEventListener('touchstart', (e) => e.preventDefault());
+        button.addEventListener('touchmove', (e) => e.preventDefault());
+        button.addEventListener('touchend', (e) => e.preventDefault());
+    });
+
     const PIECES = {
         I: {
             shape: [
@@ -196,25 +208,36 @@ document.addEventListener('DOMContentLoaded', () => {
         drawNextPiece();
         gameInterval = setInterval(moveDown, speed);
     }
+    function doRotatePiece(piece) {
+        const rotated = rotatePiece(piece);
+        if (!collision({ ...rotated, position: piece.position })) {
+            piece.shape = rotated.shape;
+        }        
+    }
+
+    function doMoveRight(piece) {
+        piece.position.x++;
+        if (collision(piece)) piece.position.x--;        
+    }
+
+    function doMoveLeft(piece) {
+        piece.position.x--;
+        if (collision(piece)) piece.position.x++;
+    }
 
     document.addEventListener('keydown', e => {
         switch (e.key) {
             case 'ArrowLeft':
-                currentPiece.position.x--;
-                if (collision(currentPiece)) currentPiece.position.x++;
+                doMoveLeft(currentPiece);
                 break;
             case 'ArrowRight':
-                currentPiece.position.x++;
-                if (collision(currentPiece)) currentPiece.position.x--;
+                doMoveRight(currentPiece);
                 break;
             case 'ArrowDown':
                 moveDown();
                 break;
             case 'ArrowUp':
-                const rotated = rotatePiece(currentPiece);
-                if (!collision({ ...rotated, position: currentPiece.position })) {
-                    currentPiece.shape = rotated.shape;
-                }
+                doRotatePiece(currentPiece);
                 break;
             case ' ':
                 while (!collision(currentPiece)) {
