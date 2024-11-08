@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
     <title>Snake Game</title>
     <style>
         * {
@@ -8,50 +9,56 @@
             padding: 0;
             box-sizing: border-box;
         }
-
+    
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            /* justify-content: center; */
             min-height: 100vh;
             background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
             font-family: Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
         }
-
+    
         .game-container {
             position: relative;
-            width: 600px;
-            height: 600px;
-            margin: 60px;
+            width: min(600px, 95vw);
+            height: min(600px, 95vw);
+            margin: 5vh auto;
             border: 2px solid #444;
             border-radius: 10px;
             background: rgba(0, 0, 0, 0.3);
             overflow: hidden;
             z-index: 0;
         }
-
+    
         .score-board {
             color: #fff;
-            font-size: 24px;
-            padding: 20px;
+            font-size: clamp(18px, 4vw, 24px);
+            padding: 10px;
             text-align: center;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            background: rgba(0, 0, 0, 0.3);
         }
-
+    
         .snake-part {
             position: absolute;
-            width: 30px;
-            height: 30px;
+            width: calc(min(600px, 95vw) / 20);
+            height: calc(min(600px, 95vw) / 20);
             transition: all 0.1s linear;
         }
-
+    
         .food {
             position: absolute;
-            width: 30px;
-            height: 30px;
+            width: calc(min(600px, 95vw) / 20);
+            height: calc(min(600px, 95vw) / 20);
             transition: all 0.2s ease;
         }
-
+    
         #gameOver {
             position: absolute;
             top: 50%;
@@ -63,33 +70,40 @@
             border-radius: 10px;
             text-align: center;
             display: none;
-            z-index: 1;
+            z-index: 3;
+            width: 80%;
+            max-width: 300px;
         }
-
+    
+        #gameOver h2 {
+            font-size: clamp(16px, 4vw, 24px);
+        }
+    
         button {
             background: #4CAF50;
             border: none;
-            padding: 10px 20px;
+            padding: clamp(8px, 2vw, 10px) clamp(15px, 4vw, 20px);
             color: white;
             border-radius: 5px;
             cursor: pointer;
             margin-top: 10px;
+            font-size: clamp(14px, 3vw, 16px);
         }
-
-        button:hover {
-            background: #45a049;
-        }
+    
         .control-buttons {
-            position: absolute;
+            position: fixed;
+            bottom: 0;
+            left: 0;
             width: 100%;
-            height: 100%;
+            height: 35vh;
             pointer-events: none;
+            z-index: 2;
         }
-
+    
         .control-button {
             position: absolute;
-            width: 80px;
-            height: 80px;
+            width: clamp(50px, 15vw, 80px);
+            height: clamp(50px, 15vw, 80px);
             background: rgba(255, 255, 255, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
@@ -100,59 +114,78 @@
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
-
+    
         .control-button img {
-            width: 80px;
-            height: 80px;
+            width: 60%;
+            height: 60%;
             opacity: 0.7;
             transition: transform 0.2s;
-            z-index: 2;
         }
-
+    
         #up img { transform: rotate(90deg);}
         #down img { transform: rotate(-90deg); }
         #right img { transform: rotate(180deg); }
-        #left img { transform: rotate(0deg); }
 
-        #up { top: 10px; left: 50%; transform: translateX(-50%); }
+        #up { top: 0; left: 50%; transform: translateX(-50%); }
         #down { bottom: 10px; left: 50%; transform: translateX(-50%); }
         #left { left: 10px; top: 50%; transform: translateY(-50%); }
         #right { right: 10px; top: 50%; transform: translateY(-50%); }
-
-        /* Display buttons only on small screens */
+    
         @media (min-width: 1024px) {
             .control-buttons {
                 display: none;
             }
+            
+            .game-container {
+                margin: 60px auto;
+            }
+            
+            .score-board {
+                position: relative;
+                background: none;
+            }
+        }
+    
+        @media (max-height: 700px) {
+            .game-container {
+                width: min(600px, 90vmin);
+                height: min(600px, 90vmin);
+            }
+            
+            .snake-part, .food {
+                width: calc(min(600px, 90vmin) / 20);
+                height: calc(min(600px, 90vmin) / 20);
+            }
         }
     </style>
-</head>
-<body>
-    <div class="score-board">Score: <span id="score">0</span></div>
+    </style>
     
-    <div id="gameOver">
-        <h2>Game Over!</h2>
-        <p>Final Score: <span id="finalScore">0</span></p>
-        <button onclick="startGame()">Play Again</button>        
-    </div>
-    <!-- Control buttons -->
-    <div class="control-buttons">
-        <div class="control-button" id="up">
-            <img src="../images/arrow.svg" alt="Up">
+    <body>
+        <div class="score-board">Score: <span id="score">0</span></div>
+        
+        <div id="gameOver">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button onclick="startGame()">Play Again</button>        
         </div>
-        <div class="control-button" id="down">
-            <img src="../images/arrow.svg" alt="Down">
+    
+        <div class="control-buttons">
+            <div class="control-button" id="up">
+                <img src="../images/arrow.svg" alt="Up">
+            </div>
+            <div class="control-button" id="down">
+                <img src="../images/arrow.svg" alt="Down">
+            </div>
+            <div class="control-button" id="left">
+                <img src="../images/arrow.svg" alt="Left">
+            </div>
+            <div class="control-button" id="right">
+                <img src="../images/arrow.svg" alt="Right">
+            </div>
         </div>
-        <div class="control-button" id="left">
-            <img src="../images/arrow.svg" alt="Left">
+        <div class="game-container" id="gameContainer">
         </div>
-        <div class="control-button" id="right">
-            <img src="../images/arrow.svg" alt="Right">
-        </div>
-    </div><!-- .control-buttons -->
-    <div class="game-container" id="gameContainer">
-    </div>
-</body>
+    </body>
 
 <script src="../js/js-confetti.browser.js"></script>
 <script>
@@ -205,11 +238,18 @@ function playSound(sound) {
   sound.play().catch(err => console.log('Audio play failed:', err));
 }
 
+function getGridSize() {
+    const container = document.querySelector('.game-container');
+    const containerSize = Math.min(container.offsetWidth, container.offsetHeight);
+    return containerSize / 20; // 20x20 grid
+}
+
 function createSnakePart(x, y, type) {
+    const gridSize = getGridSize();
     const part = document.createElement('div');
     part.className = 'snake-part';
-    part.style.left = `${x}px`;
-    part.style.top = `${y}px`;
+    part.style.left = `${x * gridSize}px`;
+    part.style.top = `${y * gridSize}px`;
     
     const img = document.createElement('img');
     img.src = `../images/snake-${type}.svg`;
@@ -248,11 +288,12 @@ function updateSnake() {
     container.appendChild(food.element);
   }
 
-function drawFood(x, y) {
+  function drawFood(x, y) {
+    const gridSize = getGridSize();
     foodElement = document.createElement('div');
     foodElement.className = 'food';
-    foodElement.style.left = `${x}px`;
-    foodElement.style.top = `${y}px`;    
+    foodElement.style.left = `${x * gridSize}px`;
+    foodElement.style.top = `${y * gridSize}px`;    
     foodImg.src = '../images/'+fruits[Math.floor(Math.random() * fruits.length)]+'.svg';
     foodImg.style.width = '100%';
     foodImg.style.height = '100%';
@@ -261,27 +302,24 @@ function drawFood(x, y) {
 
 function moveSnake() {
     const head = { ...snake[0] };
+    const gridSize = 1; // Using grid units instead of pixels
     
     switch(direction) {
-        case 'right': head.x += 30; break;
-        case 'left': head.x -= 30; break;
-        case 'up': head.y -= 30; break;
-        case 'down': head.y += 30; break;
+        case 'right': head.x += gridSize; break;
+        case 'left': head.x -= gridSize; break;
+        case 'up': head.y -= gridSize; break;
+        case 'down': head.y += gridSize; break;
     }
 
-    // Add wrap-around logic
-    if (head.x >= 600) head.x = 0;
-    if (head.x < 0) head.x = 570;
-    if (head.y >= 600) head.y = 0;
-    if (head.y < 0) head.y = 570;
+    // Wrap-around logic using grid units
+    if (head.x >= 20) head.x = 0;
+    if (head.x < 0) head.x = 19;
+    if (head.y >= 20) head.y = 0;
+    if (head.y < 0) head.y = 19;
 
     if (head.x === food.x && head.y === food.y) {
-        // Play the sound
         playSound(eatSound);
-
-        // Show confetti
         jsConfetti.addConfetti();
-                
         generateFood();
         score += foodImg.src.split('/').pop().split('.')[0].length;
         document.getElementById('score').textContent = score;
@@ -292,7 +330,6 @@ function moveSnake() {
         snake.pop();
     }
 
-    // check self-collision
     if (snake.some(part => part.x === head.x && part.y === head.y)) {
         gameOver();
         return;
@@ -303,11 +340,10 @@ function moveSnake() {
 }
 
 function generateFood() {
-    const gridSize = 20;
     let newX, newY;
     do {
-        newX = Math.floor(Math.random() * gridSize) * 30;
-        newY = Math.floor(Math.random() * gridSize) * 30;
+        newX = Math.floor(Math.random() * 20); // Using grid units (0-19)
+        newY = Math.floor(Math.random() * 20);
     } while (snake.some(part => part.x === newX && part.y === newY));
     
     drawFood(newX, newY);
@@ -330,22 +366,29 @@ function gameOver() {
 
 function startGame() {
     snake = [
-        { x: 90, y: 0 },
-        { x: 60, y: 0 },
-        { x: 30, y: 0 }
+        { x: 3, y: 0 }, // Using grid units instead of pixels
+        { x: 2, y: 0 },
+        { x: 1, y: 0 }
     ];
     direction = 'right';
     score = 0;
     speed = 200;
     
     gameOverElement.style.display = 'none';
-    
     document.getElementById('score').textContent = '0';
     generateFood();
     updateSnake();
     if (gameLoop) clearInterval(gameLoop);
     gameLoop = setInterval(moveSnake, speed);
 }
+
+// Add resize handler
+window.addEventListener('resize', () => {
+    updateSnake();
+    if (food && food.element) {
+        drawFood(food.x, food.y);
+    }
+});
 
 document.addEventListener('keydown', (e) => {
     const newDirection = {

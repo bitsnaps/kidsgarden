@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Portal</title>
     <style>
         body {
@@ -16,22 +18,24 @@
 
         h1 {
             color: #2d3748;
-            font-size: 3rem;
+            font-size: 6vw; /* Responsive font size */
             margin-bottom: 2rem;
             text-align: center;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive grid */
+            gap: 1.5rem;
             padding: 2rem;
-            max-width: 800px;
+            max-width: 1000px;
+            width: 100%;
         }
 
         .game-button {
-            width: 200px;
-            height: 200px;
+            width: 100%;
+            padding-top: 100%; /* Makes buttons square */
+            position: relative;
             border: none;
             border-radius: 1rem;
             font-size: 1.5rem;
@@ -40,10 +44,20 @@
             cursor: pointer;
             transition: transform 0.2s;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .game-button:hover {
             transform: translateY(-5px);
+        }
+
+        .game-button span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         #game01 {
@@ -61,29 +75,47 @@
         #game04 {
             background: linear-gradient(45deg, #be2edd, #e056fd);
         }
+
         #game05 {
             background: linear-gradient(45deg, #c52de7, #de62f7);
         }
+
         #game06 {
             background: linear-gradient(45deg, #d8774b, #ff831e);
+        }
+
+        /* Media Queries for smaller screens */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 8vw; /* Smaller font size on small screens */
+            }
+
+            .grid {
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .game-button {
+                font-size: 1.2rem;
+            }
         }
         .ball {
             position: fixed;
             border-radius: 50%;
             pointer-events: none;
             z-index: -1;
-        }
+        }        
     </style>
 </head>
 <body>
     <h1>Game Portal</h1>
     <div class="grid">
-        <a href="./AlphaPuzzle/index.html"><button class="game-button" id="game01">Alpha Puzzle</button></a>
-        <a href="./ColoredShape/index.html"><button class="game-button" id="game02">Colored Shape</button></a>
-        <a href="./MemoryShapes/index.html"><button class="game-button" id="game03">Memory Shapes</button></a>
-        <a href="./ShapePuzzle/index.html"><button class="game-button" id="game04">Shaped Puzzle</button></a>
-        <a href="./Tetris/index.html"><button class="game-button" id="game05">Tetris Game</button></a>
-        <a href="./Snake/index.html"><button class="game-button" id="game06">Snake Game</button></a>
+        <a href="./AlphaPuzzle/index.html"><button class="game-button" id="game01"><span>Alpha Puzzle</span></button></a>
+        <a href="./ColoredShape/index.html"><button class="game-button" id="game02"><span>Colored Shape</span></button></a>
+        <a href="./MemoryShapes/index.html"><button class="game-button" id="game03"><span>Memory Shapes</span></button></a>
+        <a href="./ShapePuzzle/index.html"><button class="game-button" id="game04"><span>Shaped Puzzle</span></button></a>
+        <a href="./Tetris/index.html"><button class="game-button" id="game05"><span>Tetris Game</span></button></a>
+        <a href="./Snake/index.html"><button class="game-button" id="game06"><span>Snake Game</span></button></a>
     </div>
 
     <script>
