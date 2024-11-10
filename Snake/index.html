@@ -158,7 +158,6 @@
             }
         }
     </style>
-    </style>
     
     <body>
         <div class="score-board">Score: <span id="score">0</span></div>
@@ -204,8 +203,8 @@ let foodElement;
 const container = document.getElementById('gameContainer');
 const gameOverElement = document.getElementById('gameOver');
 const foodImg = document.createElement('img');
-const eatSound = new Audio('eat-sound.mp3');
-const gameOverSound = new Audio('gameover-sound.mp3');
+const eatSound = new Audio('../mp3/eat-sound.mp3');
+const gameOverSound = new Audio('../mp3/gameover-sound.mp3');
 const jsConfetti = new JSConfetti();
 
 document.getElementById('up').addEventListener('touchstart', () => changeDirection('up'));
