@@ -41,9 +41,9 @@
             background: white;
             border: 2px solid #ddd;
             border-radius: 12px;
-            padding: 10px;
-            width: min(300px, 45vw);
-            height: min(300px, 45vw);
+            padding: 5px;
+            width: min(250px, 45vw);
+            height: min(250px, 45vw);
         }
         .color-picker {
             display: flex;
@@ -152,7 +152,7 @@
                     return {
                         score: 0,
                         colors: [
-                            'red', 'green', 'blue', 'yellow', 'pink', 'orange', 'violet', 'black', 'grey', 'brown', 'purple'
+                            'red', 'green', 'blue', 'yellow', 'hotpink', 'orange', 'black', 'grey', 'brown', 'purple'
                         ],
                         targetColor: '',
                         userDrawing: null,
@@ -181,6 +181,8 @@
                             () => this.targetDrawing.path('M 20 200 L 20 80 L 100 10 L 180 80 L 180 200 Z M 70 200 L 70 120 L 130 120 L 130 200 Z'),
                             // Circle
                             () => this.targetDrawing.circle(200).move(25, 25),
+                            // Square
+                            () => this.targetDrawing.rect(100, 100).move(50, 50),
                             // Rectangle
                             () => this.targetDrawing.rect(200, 100).move(25, 75),
                             // Triangle

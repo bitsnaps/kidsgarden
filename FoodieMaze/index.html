@@ -37,7 +37,18 @@
         #menu-canvas {
             z-index: 2;
         }
-
+        .sprite {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+        .collectible {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
 </style>    
   </head>
   <body>
@@ -66,13 +77,26 @@
     // Animal and food sprites
     const SPRITES = {
         player: [
-            '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'
+            // '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'
+            '../images/cat.svg',
+            '../images/dog.svg',
+            '../images/rabbit.svg',
+            '../images/fox.svg',
+            '../images/bear.svg',
+            '../images/lion.svg'            
         ],
         collectibles: [
-            '🍎', '🍕', '🍔', '🌭', '🍦', '🍪', '🍩', '🍫'
+            // '🍎', '🍕', '🍔', '🌭', '🍦', '🍪', '🍩', '🍫'
+            '../images/apple.svg',
+            '../images/orange.svg',
+            '../images/fish.svg',
+            '../images/lemon.svg',
+            '../images/watermelon.svg',
+            '../images/chicken.svg'
         ],
-        end: '🏁'
+        end: '../images/flag.svg' //'🏁'
     };
+    
 
 (function() {
 
@@ -97,9 +121,6 @@ menuCanvas.height = mazeCanvas.height = canvasDiv.clientHeight - 20;
 
 menuContext.textAlign = mazeContext.textAlign = "center";
 menuContext.textBaseline = mazeContext.textBaseline = "middle";
-
-var menuCanvas = document.getElementById("menu-canvas");
-var menuContext = menuCanvas.getContext("2d");
 
 // --------------
 // Maze variables
@@ -209,7 +230,8 @@ var DANGER_FILL_COLOUR = "#FF7661";
 var DANGER_STROKE_COLOUR = "#913324";
 
 var player;
-
+var imgSolution;
+var imgRandom;
 
 // --------------
 // Start the fun!
@@ -1014,6 +1036,7 @@ function drawMaze() {
     drawEnd();
     drawCounterTallies();
     drawTimer(timeLeft);
+    // drawCollectibles();
 }
 
 function drawMazeWalls() {
@@ -1041,6 +1064,18 @@ function drawMazeWalls() {
 
 function drawCounters() {
     // Draw the solution and random counters to the maze
+    if (!imgSolution){
+        const foodSolution = SPRITES.collectibles[Math.floor(Math.random() * SPRITES.collectibles.length)];
+        imgSolution = new Image();
+        imgSolution.classList.add('sprite');
+        imgSolution.src = foodSolution;
+    }
+    if (!imgRandom){
+        const foodRandom = SPRITES.collectibles[Math.floor(Math.random() * SPRITES.collectibles.length)];
+        imgRandom = new Image();
+        imgRandom.classList.add('sprite');
+        imgRandom.src = foodRandom;
+    }
 
     mazeContext.lineWidth = 5;
 
@@ -1048,13 +1083,27 @@ function drawCounters() {
         for (var j = 0; j < n; j++) {
             if (maze[i][j] & 16) {
                 // Draw solution counters
-                drawCircle((i + 0.5) * cellWidth, (j + 0.5) * cellHeight,
-                        circleRad, SOLUTION_FILL_COLOUR, SOLUTION_STROKE_COLOUR);
+                    mazeContext.drawImage(
+                        imgSolution,
+                        i * cellWidth + (cellWidth - circleRad*2)/2,
+                        j * cellHeight + (cellHeight - circleRad*2)/2,
+                        circleRad*2,
+                        circleRad*2
+                    );
+                // drawCircle((i + 0.5) * cellWidth, (j + 0.5) * cellHeight,
+                //         circleRad, SOLUTION_FILL_COLOUR, SOLUTION_STROKE_COLOUR);
             }
             if (maze[i][j] & 32) {
                 // Draw random counters
-                drawCircle((i + 0.5) * cellWidth, (j + 0.5) * cellHeight,
-                        circleRad, RANDOM_FILL_COLOUR, RANDOM_STROKE_COLOUR);
+                mazeContext.drawImage(
+                        imgRandom,
+                        i * cellWidth + (cellWidth - circleRad*2)/2,
+                        j * cellHeight + (cellHeight - circleRad*2)/2,
+                        circleRad*2,
+                        circleRad*2
+                    );
+                // drawCircle((i + 0.5) * cellWidth, (j + 0.5) * cellHeight,
+                //         circleRad, RANDOM_FILL_COLOUR, RANDOM_STROKE_COLOUR);
             }
         }
     }
@@ -1063,14 +1112,18 @@ function drawCounters() {
 }
 
 function drawCircle(x, y, radius, fillStyle, strokeStyle) {
-    // Draw a circle of radius `radius` centred on point (`x`, `y`)
-
+    // Draw a sprite of radius `radius` centred on point (`x`, `y`)
+    const foodIcon = SPRITES.collectibles[Math.floor(Math.random() * SPRITES.collectibles.length)];
+    const img = new Image();
+    img.classList.add('sprite');
+    img.src = foodIcon;
+    // mazeContext.drawImage(img, x,y, radius, 0);
     mazeContext.beginPath();
     mazeContext.arc(x, y, radius, 0, 2 * Math.PI, false);
     mazeContext.fillStyle = fillStyle;
     mazeContext.fill();
-    mazeContext.strokeStyle = strokeStyle;
-    mazeContext.stroke();
+    // mazeContext.strokeStyle = strokeStyle;
+    // mazeContext.stroke();
 }
 
 function drawEnd() {
@@ -1172,12 +1225,23 @@ function drawPlayer(x, y) {
     // Draw the object representing the player, currently a square.
     // Note that a reduced cell is cleared to avoid erasing the walls.
 
-    const playerEmoji = getPlayer();
-        mazeContext.font = `${playerWidth}px Arial`;
-        mazeContext.fillText(playerEmoji, 
-            playerPosX * cellWidth + cellWidth/2, 
-            playerPosY * cellHeight + cellHeight/2
+    const playerIcon = getPlayer();
+    mazeContext.font = `${playerWidth}px Arial`;
+    var img = new Image();
+    img.src = playerIcon;
+    img.classList.add('sprite');
+    img.onload = () => {
+        mazeContext.drawImage(img, 
+            playerPosX * cellWidth + (cellWidth - playerWidth)/2,
+            playerPosY * cellHeight + (cellHeight - playerHeight)/2,
+            playerWidth,
+            playerHeight
         );
+    }
+    // mazeContext.fillText(playerEmoji, 
+    //     playerPosX * cellWidth + cellWidth/2, 
+    //     playerPosY * cellHeight + cellHeight/2
+    // );
 
     // var currTopLeftX = (playerPosX + 0.5) * cellWidth - 0.5 * playerWidth;
     // var currTopLeftY = (playerPosY + 0.5) * cellHeight - 0.5 * playerHeight;
@@ -1200,34 +1264,44 @@ function drawPlayer(x, y) {
 }
 
 function drawCollectibles() {
-        const foodEmoji = SPRITES.collectibles[Math.floor(Math.random() * SPRITES.collectibles.length)];
-        mazeContext.font = `${circleRad*2}px Arial`;
+        const foodIcon = SPRITES.collectibles[Math.floor(Math.random() * SPRITES.collectibles.length)];
+        // mazeContext.font = `${circleRad*2}px Arial`;
         
         // Draw solution collectibles
         for(let i = 0; i < m; i++) {
             for(let j = 0; j < n; j++) {
                 if(maze[i][j] & 16) { // Solution counter
-                    mazeContext.fillText(foodEmoji,
-                        i * cellWidth + cellWidth/2,
-                        j * cellHeight + cellHeight/2
+                    const img = new Image();
+                    img.classList.add('sprite');
+                    img.src = foodIcon;
+                    mazeContext.drawImage(
+                        img,
+                        i * cellWidth + (cellWidth - circleRad*2)/2,
+                        j * cellHeight + (cellHeight - circleRad*2)/2,
+                        circleRad*2,
+                        circleRad*2
                     );
+                    // mazeContext.fillText(foodIcon,
+                    //     i * cellWidth + cellWidth/2,
+                    //     j * cellHeight + cellHeight/2
+                    // );
                 }
             }
         }
 
         // Draw random collectibles
-        const randomFoodEmoji = SPRITES.collectibles[Math.floor(Math.random() * SPRITES.collectibles.length)];
-        console.log(randomFoodEmoji);
-        for(let i = 0; i < m; i++) {
-            for(let j = 0; j < n; j++) {
-                if(maze[i][j] & 32) { // Random counter
-                    mazeContext.fillText(randomFoodEmoji,
-                        i * cellWidth + cellWidth/2,
-                        j * cellHeight + cellHeight/2
-                    );
-                }
-            }
-        }
+        // const randomFoodEmoji = SPRITES.collectibles[Math.floor(Math.random() * SPRITES.collectibles.length)];
+        
+        // for(let i = 0; i < m; i++) {
+        //     for(let j = 0; j < n; j++) {
+        //         if(maze[i][j] & 32) { // Random counter
+        //             mazeContext.fillText(randomFoodEmoji,
+        //                 i * cellWidth + cellWidth/2,
+        //                 j * cellHeight + cellHeight/2
+        //             );
+        //         }
+        //     }
+        // }
 
         // Draw end point
         mazeContext.fillText(SPRITES.end,
@@ -1236,45 +1310,45 @@ function drawCollectibles() {
         );
     }
     
-    // Add touch controls
-    function initTouchControls() {
-        let touchStartX = 0;
-        let touchStartY = 0;
+// Add touch controls
+function initTouchControls() {
+    let touchStartX = 0;
+    let touchStartY = 0;
 
-        mazeCanvas.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        });
+    mazeCanvas.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
 
-        mazeCanvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            const touchEndX = e.touches[0].clientX;
-            const touchEndY = e.touches[0].clientY;
-            
-            const diffX = touchEndX - touchStartX;
-            const diffY = touchEndY - touchStartY;
-            
-            if(Math.abs(diffX) > Math.abs(diffY)) {
-                if(diffX > 0) {
-                    movePlayer(playerPosX + 1, playerPosY);
-                } else {
-                    movePlayer(playerPosX - 1, playerPosY);
-                }
+    mazeCanvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const touchEndX = e.touches[0].clientX;
+        const touchEndY = e.touches[0].clientY;
+        
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+        
+        if(Math.abs(diffX) > Math.abs(diffY)) {
+            if(diffX > 0) {
+                movePlayer(playerPosX + 1, playerPosY);
             } else {
-                if(diffY > 0) {
-                    movePlayer(playerPosX, playerPosY + 1);
-                } else {
-                    movePlayer(playerPosX, playerPosY - 1);
-                }
+                movePlayer(playerPosX - 1, playerPosY);
             }
-            
-            touchStartX = touchEndX;
-            touchStartY = touchEndY;
-        });
-    }
+        } else {
+            if(diffY > 0) {
+                movePlayer(playerPosX, playerPosY + 1);
+            } else {
+                movePlayer(playerPosX, playerPosY - 1);
+            }
+        }
+        
+        touchStartX = touchEndX;
+        touchStartY = touchEndY;
+    });
+}
 
 function drawStartMessage() {
-    menuContext.font = "40px Arial";
+    menuContext.font = "18px Arial";
     menuContext.lineWidth = 5;
 
     if (touchCapable) {
@@ -1893,6 +1967,7 @@ function initialiseGame(difficulty) {
     buildMaze();
     placeSolutionCounters();
     placeRandomCounters();
+    
 
     // Make sure the maze is unblurred
     unblurMaze();
