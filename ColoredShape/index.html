@@ -1,55 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
-    <title>Kids Coloring Game</title>
-    <link rel="stylesheet" href="../css/bulma.min.css">
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+        <title>Shapes & Colors</title>
+        <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        .score {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
         .game-container {
             display: flex;
-            justify-content: space-around;
-            margin: 20px;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px auto;
             flex-wrap: wrap;
         }
         .drawing-area {
+            background: white;
             border: 2px solid #ddd;
-            border-radius: 8px;
-            margin: 5px;
-            padding: 5px;
+            border-radius: 12px;
+            padding: 10px;
+            width: min(300px, 45vw);
+            height: min(300px, 45vw);
         }
         .color-picker {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin: 10px;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px auto;
+            max-width: 600px;
         }
         .color-btn {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             border: 2px solid #ddd;
             cursor: pointer;
+            transition: transform 0.2s;
         }
         .color-btn:hover {
             transform: scale(1.1);
         }
-    </style>
-</head>
-<body>
-    <div id="app">
-        <section class="section">
+        .color-name {
+            position: relative;
+            top: 30px;
+            font-size: .8rem;
+            font-weight: bold;
+            white-space: nowrap;
+            color: #333;
+        }        
+        .message {
+            text-align: center;
+            font-size: 1.5rem;
+            min-height: 2rem;
+            margin: 1rem;
+        }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+        .new-game-btn {
+            display: block;
+            margin: 1rem auto;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .new-game-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        @media (max-width: 600px) {
+            .title { font-size: 2rem; }
+            .drawing-area {
+                width: 85vw;
+                height: 85vw;
+            }
+            .color-btn {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        </style>
+    </head>
+    <body>
+        <div id="app">
             <div class="container">
-                <h1 class="title has-text-centered">Coloring Shapes</h1>
-                <div class="has-text-centered">
-                    <p class="is-size-4">Score: {{ score }}</p>
-                </div>
+                <h1 class="title">Coloring Shapes</h1>
+                <p class="score">Score: {{ score }}</p>
                 
                 <div class="game-container">
                     <div class="drawing-area" id="target-shape"></div>
                     <div class="drawing-area" id="user-shape"></div>
                 </div>
-
+    
                 <div class="color-picker" v-if="!message">
                     <button 
                         v-for="color in colors" 
@@ -57,100 +126,108 @@
                         class="color-btn"
                         :style="{ backgroundColor: color }"
                         @click="selectColor(color)">
+                        <span class="color-name" :style="{'color': color, 'textTransform': 'capitalize'}">{{color}}</span>
                     </button>
                 </div>
-
-                <div class="has-text-centered">
-                    <h2 :class="`title is-size-4 has-text-${message.startsWith('Great')?'success':'danger'}`">{{ message }}</h2>
-                    <br>
-                    <button class="button is-primary is-large has-text-light" :disabled="message.length" @click="newGame">New Shape</button>
-                </div>
-            </div>
-        </section>
-    </div>
     
-    <script src="../js/svg.min.js"></script>
-    <script src="../js/js-confetti.browser.js"></script>
-    <script src="../js/vue.global.prod.js"></script>
-    <script>
-        const { ref, createApp } = Vue;
-        const jsConfetti = new JSConfetti();
-
-        createApp({
-            data() {
-                return {
-                    score: 0,
-                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'],
-                    targetColor: '',
-                    userDrawing: null,
-                    targetDrawing: null,
-                    currentShape: null,
-                    message: ref('')
-                }
-            },
-            mounted() {
-                this.initializeDrawings();
-                this.newGame();
-            },
-            methods: {
-                initializeDrawings() {
-                    const size = 250;
-                    this.targetDrawing = SVG().addTo('#target-shape').size(size, size);
-                    this.userDrawing = SVG().addTo('#user-shape').size(size, size);
+                <div class="message" :class="message.startsWith('Great')?'success':'error'">
+                    {{ message }}
+                </div>
+                
+                <button class="new-game-btn" :disabled="message.length" @click="newGame">
+                    New Shape
+                </button>
+            </div>
+        </div>
+        
+        <script src="../js/svg.min.js"></script>
+        <script src="../js/js-confetti.browser.js"></script>
+        <script src="../js/vue.global.prod.js"></script>
+        <script>
+            const { ref, createApp } = Vue;
+            const jsConfetti = new JSConfetti();
+    
+            createApp({
+                data() {
+                    return {
+                        score: 0,
+                        colors: [
+                            'red', 'green', 'blue', 'yellow', 'pink', 'orange', 'violet', 'black', 'grey', 'brown', 'purple'
+                        ],
+                        targetColor: '',
+                        userDrawing: null,
+                        targetDrawing: null,
+                        currentShape: null,
+                        message: ref('')
+                    }
                 },
-                getRandomShape() {
-                    const shapes = [
-                        // Star shape points
-                        'M 100 10 L 120 90 L 200 90 L 140 140 L 160 220 L 100 170 L 40 220 L 60 140 L 0 90 L 80 90 Z',
-                        // Heart shape points
-                        'M 100 190 C 60 150 0 120 0 60 C 0 30 30 0 60 0 C 80 0 100 20 100 20 C 100 20 120 0 140 0 C 170 0 200 30 200 60 C 200 120 140 150 100 190 Z',
-                        // Simple house
-                        'M 20 200 L 20 80 L 100 10 L 180 80 L 180 200 Z M 70 200 L 70 120 L 130 120 L 130 200 Z',
-                    ]
-                    return shapes[Math.floor(Math.random() * shapes.length)]
+                mounted() {
+                    this.initializeDrawings();
+                    this.newGame();
                 },
-                drawShape(draw, pathString, color = 'none') {
-                    draw.clear()
-                    return draw.path(pathString)
-                        .fill(color)
-                        .stroke({ color: '#000', width: 2 })
-                },
-                newGame() {
-                    const shapePath = this.getRandomShape()
-                    this.targetColor = this.colors[Math.floor(Math.random() * this.colors.length)]
-                    
-                    // Draw target shape (colored)
-                    this.drawShape(this.targetDrawing, shapePath, this.targetColor)
-                    
-                    // Draw user shape (empty)
-                    this.currentShape = this.drawShape(this.userDrawing, shapePath)
-                },
-                selectColor(color) {
-                    if (!this.currentShape) return
-                    
-                    this.currentShape.fill(color)
-                    
-                    // Check if colors match
-                    if (color === this.targetColor) {
-                        this.message = 'Great job! +10 points!';
-                        jsConfetti.addConfetti();
-                        this.score += 10;
-                        setTimeout(() => {
-                            this.message = '';                            
-                            this.newGame();
-                        }, 2000)
-                    } else {
-                        this.message = 'Oops! Try again!';
-                        setTimeout(() => {
-                            this.message = '';                            
-                            this.newGame();
-                        }, 800)
-
+                methods: {
+                    initializeDrawings() {
+                        const size = 250;
+                        this.targetDrawing = SVG().addTo('#target-shape').size(size, size);
+                        this.userDrawing = SVG().addTo('#user-shape').size(size, size);
+                    },
+                    getRandomShape() {
+                        const shapes = [
+                            // Star
+                            () => this.targetDrawing.polygon('100,10 120,90 200,90 140,140 160,220 100,170 40,220 60,140 0,90 80,90'),
+                            // Heart
+                            () => this.targetDrawing.path('M 100 190 C 60 150 0 120 0 60 C 0 30 30 0 60 0 C 80 0 100 20 100 20 C 100 20 120 0 140 0 C 170 0 200 30 200 60 C 200 120 140 150 100 190 Z'),
+                            // House
+                            () => this.targetDrawing.path('M 20 200 L 20 80 L 100 10 L 180 80 L 180 200 Z M 70 200 L 70 120 L 130 120 L 130 200 Z'),
+                            // Circle
+                            () => this.targetDrawing.circle(200).move(25, 25),
+                            // Rectangle
+                            () => this.targetDrawing.rect(200, 100).move(25, 75),
+                            // Triangle
+                            () => this.targetDrawing.polygon('100,10 200,200 0,200')
+                        ];
+                        return shapes[Math.floor(Math.random() * shapes.length)];
+                    },
+                    drawShape(draw, shapeFunc, color = 'none') {
+                        draw.clear();
+                        const shape = shapeFunc();
+                        shape.fill(color).stroke({ color: '#000', width: 2 });
+                        return shape;
+                    },
+                    newGame() {
+                        const shapeFunc = this.getRandomShape();
+                        this.targetColor = this.colors[Math.floor(Math.random() * this.colors.length)];
+                        
+                        // Draw target shape (colored)
+                        this.drawShape(this.targetDrawing, shapeFunc, this.targetColor);
+                        
+                        // Draw user shape (empty)
+                        this.currentShape = this.drawShape(this.userDrawing, shapeFunc);
+                    },
+                    selectColor(color) {
+                        if (!this.currentShape) return;
+                        
+                        this.currentShape.fill(color);
+                        
+                        // Check if colors match
+                        if (color === this.targetColor) {
+                            this.message = 'Great job! +10 points!';
+                            jsConfetti.addConfetti();
+                            this.score += 10;
+                            setTimeout(() => {
+                                this.message = '';                            
+                                this.newGame();
+                            }, 2000);
+                        } else {
+                            this.message = 'Oops! Try again!';
+                            setTimeout(() => {
+                                this.message = '';                            
+                                this.newGame();
+                            }, 1500);
+                        }
                     }
                 }
-            }
-        }).mount('#app')
-    </script>
-</body>
+            }).mount('#app');
+        </script>
+    </body>
 </html>
-                        
