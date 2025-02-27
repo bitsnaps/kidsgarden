@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf8"/>
+  <title>AbdjadPuzzle</title>
+  <link rel="stylesheet" href="../css/bulma.min.css">
+<style>
+.letter-box {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.letter-box:hover {
+  background-color: #b298dc;
+}
+
+.letter-slot {
+  width: 48px;
+  height: 48px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.letter-slot:hover {
+  background-color: #b298dc;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.has-text-purple {
+  color: #6b46c1;
+}
+/* Add RTL support */
+[dir="rtl"] .letter-slot {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  margin: 0 4px;
+  padding: 5px;
+  border: 2px solid #3498db;
+  border-radius: 6px;
+}
+
+[dir="rtl"] .letter-box {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
+</head>
+<body>
+  <div id="app">
+  </div>
+
+<template id="game">
+  <div class="hero is-fullheight is-info is-light">
+    <div class="hero-body">
+      <div class="container has-text-centered" dir="rtl">
+        <h1 class="title is-2 mb-6">لعبة ألغاز الحروف</h1>
+        <h2 class="title is-2 has-text-purple mb-6" @dblclick="resetScore">{{ score }}</h2>
+
+        <!-- SVG Image of the Word to Guess -->
+        <div class="mb-6">
+          <img :src="`../images/${words[wordIndex]['en']}.svg`" width="80" @click="resetGame"/>
+        </div>
+
+        <div class="columns is-multiline is-centered is-mobile mb-4">
+          <div
+            v-for="(letter, index) in shuffledLetters"
+            :key="index"
+            class="column is-narrow"
+          >
+            <div
+              class="box has-text-centered has-text-weight-bold is-size-4 is-clickable letter-box"
+              @click="selectLetter(letter)"
+            >
+              {{ letter }}
+            </div>
+          </div>
+        </div>
+
+        <div class="box">
+          <h2 class="title is-4 has-text-grey-darker mb-2">هجّئ الكلمة:</h2>
+          <div class="is-flex is-justify-content-center gap-2">
+            <div
+              v-for="(slot, index) in selectedLetters"
+              :key="index"
+              class="letter-slot has-text-weight-bold is-size-4 is-clickable"
+              :disabled="message"
+              @click="unselectLetter(index)"
+            >
+              {{ slot }}
+            </div>
+          </div>
+          <button
+            :class="`button is-fullwidth is-large mt-5
+${isComplete ? 'is-warning' : 'is-info'}`"
+            @click="checkAnswer"
+            :disabled="!isComplete"
+          >
+            {{ message ? 'حاول مرة أخرى!' : 'تحقق' }}
+          </button>
+          <p v-if="message" class="mt-4 is-size-5 has-text-weight-medium has-text-centered">{{ message }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script src="../js/js-confetti.browser.js"></script>
+<script src="../js/vue.global.prod.js"></script>
+<script>
+const jsConfetti = new JSConfetti();
+
+const getRandomElement = (items, previousIndex = -1) => {
+  const randomIndex = Math.floor(Math.random() * items.length);
+  if (randomIndex === previousIndex) {
+    return getRandomElement(items, previousIndex); // Recursive call to try again
+  }
+  return randomIndex;
+}
+
+const App = {
+  template: '#game',
+  data() {
+    return {
+		words: [
+			{ 'en': 'apple', 'ar':'تفاحة'},
+			{ 'en': 'carrot', 'ar':'جزرة'},
+			{ 'en': 'potato', 'ar':'بطاطا'},
+			{ 'en': 'banana', 'ar':'موزة'},
+			{ 'en': 'orange', 'ar':'برتقال'},
+			{ 'en': 'garlic', 'ar':'ثوم'},
+			{ 'en': 'eggplant', 'ar':'باذنجان'},
+			{ 'en': 'lemon', 'ar':'ليمون'},
+			{ 'en': 'strawberry', 'ar':'فراولة'},
+			{ 'en': 'watermelon', 'ar':'بطيخ'},
+			{ 'en': 'cherry', 'ar':'كرز'},
+			{ 'en': 'pear', 'ar':'إجاص'}			
+		],
+	  wordIndex: 0,
+      score: 0,
+      letters: [],
+      shuffledLetters: [],
+      selectedLetters: [],
+      message: '',
+    };
+  },
+  computed: {
+    isComplete() {
+      return this.selectedLetters.length === this.words[this.wordIndex]['ar'].length;
+    },
+  },
+  methods: {
+    shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    },
+    selectLetter(letter) {
+      if (this.selectedLetters.length < this.words[this.wordIndex]['ar'].length) {
+        this.selectedLetters.push(letter);
+        this.shuffledLetters.splice(this.shuffledLetters.indexOf(letter), 1);
+      }
+    },
+    unselectLetter(index){
+      if (!this.message){
+        this.shuffledLetters.push(this.selectedLetters.splice(index, 1)[0]);
+      }
+    },
+    checkAnswer() {
+      if (this.message)
+        return;
+      const userWord = this.selectedLetters.join('');
+      if (userWord === this.words[this.wordIndex]['ar']) {
+        jsConfetti.addConfetti()
+        this.message = `🎉 صحيح! أحسنت! حصلت على +${this.words[this.wordIndex]['ar'].length} نقطة!`;
+        this.score += this.words[this.wordIndex]['ar'].length;
+        localStorage.setItem('score', this.score);
+      } else {
+        this.message = '❌ عفواً! حاول مرة أخرى.';
+      }
+    },
+    resetGame() {
+      this.wordIndex = getRandomElement(this.words, this.wordIndex);
+      this.letters = this.words[this.wordIndex]['ar'].split('');
+      this.selectedLetters = [];
+      this.shuffledLetters = this.shuffle([...this.letters]);
+      this.message = '';
+    },
+    resetScore(){
+      if (localStorage && localStorage.getItem('score') && confirm('هل تريد حقاً إعادة تعيين نتيجتك؟')){
+        localStorage.removeItem('score');
+        this.score = 0;
+      }
+    }
+  },
+  mounted() {
+    if (localStorage && localStorage.getItem('score')){
+      this.score = parseInt(localStorage.getItem('score'));
+    }
+    this.wordIndex = getRandomElement(this.words);
+    this.letters = this.words[this.wordIndex]['ar'].toString().split('');
+    this.shuffledLetters = this.shuffle([...this.letters]);
+  },
+  watch: {
+    message(val) {
+      if (val) {
+        setTimeout(() => {
+          this.resetGame();
+        }, 2000);
+      }
+    },
+  },
+}
+
+Vue.createApp(App).mount('#app');
+</script>
+
+</body>
