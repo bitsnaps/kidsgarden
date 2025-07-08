@@ -86,6 +86,15 @@
             margin-bottom: 10px;
         }
 
+        #sun-moon-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 5;
+        }
+
         #bird-container {
             position: relative;
             margin-bottom: 20px;
@@ -334,6 +343,23 @@
         <svg id="correct-star" style="position: absolute; top: 50%; left: 50%; width: 100px; height: 100px; transform: translate(-50%, -50%) scale(0); transition: transform 0.5s; display: none; z-index: 10;" viewBox="0 0 100 100">
             <polygon points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35" fill="#FFD700"/>
         </svg>
+        <div id="sun-moon-container">
+            <svg id="sun" viewBox="0 0 100 100" style="position: absolute; top: 20px; right: 20px; width: 80px; height: 80px; display: none;">
+                <circle cx="50" cy="50" r="40" fill="#FFF"/>
+                <line x1="50" y1="10" x2="50" y2="0" stroke="#FFD700" stroke-width="4"/>
+                <line x1="50" y1="90" x2="50" y2="100" stroke="#FFD700" stroke-width="4"/>
+                <line x1="10" y1="50" x2="0" y2="50" stroke="#FFD700" stroke-width="4"/>
+                <line x1="90" y1="50" x2="100" y2="50" stroke="#FFD700" stroke-width="4"/>
+                <line x1="22" y1="22" x2="15" y2="15" stroke="#FFD700" stroke-width="4" transform="rotate(45 50 50)"/>
+                <line x1="78" y1="22" x2="85" y2="15" stroke="#FFD700" stroke-width="4" transform="rotate(-45 50 50)"/>
+                <line x1="22" y1="78" x2="15" y2="85" stroke="#FFD700" stroke-width="4" transform="rotate(-45 50 50)"/>
+                <line x1="78" y1="78" x2="85" y2="85" stroke="#FFD700" stroke-width="4" transform="rotate(45 50 50)"/>
+            </svg>
+            <svg id="moon" viewBox="0 0 100 100" style="position: absolute; top: 20px; right: 20px; width: 80px; height: 80px; display: none;">
+                <circle cx="50" cy="50" r="40" fill="#FFF"/>
+                <circle id="moon-cutout" cx="65" cy="35" r="25" fill="var(--bg-color)"/>
+            </svg>
+        </div>
     </div>
     <script>
         const { createApp, ref, computed, onMounted } = Vue;
@@ -411,11 +437,41 @@
                     speechBubble.value.visible = false;
                 }
 
+                function updateSunMoon(hour) {
+                    const sun = document.getElementById('sun');
+                    const moon = document.getElementById('moon');
+                    const moonCutout = document.getElementById('moon-cutout');
+                    const app = document.getElementById('app');
+
+                    let newBgColor;
+
+                    if (level.value >= 5) {
+                        if (hour >= 6 && hour < 18) { // Day time (6 AM to 6 PM)
+                            sun.style.display = 'block';
+                            moon.style.display = 'none';
+                            newBgColor = '#87CEEB'; // Sky Blue
+                        } else { // Night time (6 PM to 6 AM)
+                            sun.style.display = 'none';
+                            moon.style.display = 'block';
+                            newBgColor = '#2C3E50'; // Dark Blue/Night Sky
+                        }
+                    } else {
+                        sun.style.display = 'none';
+                        moon.style.display = 'none';
+                        newBgColor = '#87CEEB'; // Default Sky Blue
+                    }
+                    app.style.backgroundColor = newBgColor;
+                    if (moonCutout) {
+                        moonCutout.setAttribute('fill', newBgColor);
+                    }
+                }
+
                 function updateClock(hour, minute) {
                     const minuteDeg = (minute / 60) * 360;
                     const hourDeg = ((hour % 12) / 12) * 360 + (minute / 60) * 30;
                     minuteHandRotation.value = `rotate(${minuteDeg}deg)`;
                     hourHandRotation.value = `rotate(${hourDeg}deg)`;
+                    updateSunMoon(hour);
                 }
 
                 function formatTime(hour, minute) {
