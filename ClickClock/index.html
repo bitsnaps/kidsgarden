@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Birdy's Clock Game</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --bg-color: #87CEEB; /* Sky Blue */
+            --clock-face-color: #FFFFFF;
+            --clock-border-color: #333;
+            --hand-color: #333;
+            --grass-color: #8BC34A; /* Green Grass */
+            --button-bg: #FFC107; /* Amber */
+            --button-hover-bg: #FFA000; /* Darker Amber */
+            --correct-color: #4CAF50; /* Green */
+            --incorrect-color: #F44336; /* Red */
+            --drop-zone-bg: #f0f0f0;
+            --drop-zone-hover-bg: #e0e0e0;
+            --font-family: 'Arial', sans-serif;
+            --score-color: #FFD700; /* Gold */
+        }
+
+        #top-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 20px;
+            box-sizing: border-box;
+        }
+
+        #score-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--score-color);
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: var(--font-family);
+            overflow: hidden;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+            background-color: var(--bg-color);
+            position: relative;
+        }
+
+        #grass {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20%;
+            background-color: var(--grass-color);
+            border-top: 5px solid #689F38;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 1;
+            padding-top: 20px;
+        }
+
+        #level-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 5px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+
+        #bird-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #bird {
+            width: 100px;
+            height: auto;
+        }
+
+        #speech-bubble {
+            position: absolute;
+            bottom: 90%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 1.2em;
+            width: max-content;
+            max-width: 200px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #speech-bubble.visible {
+            opacity: 1;
+        }
+
+        #clock-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            background-color: var(--clock-face-color);
+            border-radius: 50%;
+            border: 10px solid var(--clock-border-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clock-hand {
+            position: absolute;
+            background-color: var(--hand-color);
+            transform-origin: bottom center;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        #hour-hand {
+            width: 8px;
+            height: 60px;
+            top: 65px;
+        }
+
+        #minute-hand {
+            width: 6px;
+            height: 90px;
+            top: 35px;
+        }
+        
+        .drop-zone {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--drop-zone-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--hand-color);
+            border: 2px dashed var(--clock-border-color);
+            transition: background-color 0.3s;
+        }
+
+        .drop-zone.drag-over {
+            background-color: var(--drop-zone-hover-bg);
+            border-style: solid;
+        }
+
+        .drop-zone.correct {
+            background-color: var(--correct-color);
+            color: white;
+            border-style: solid;
+        }
+
+        .drop-zone-1 { transform: translate(54px, -94px); }
+        .drop-zone-2 { transform: translate(94px, -54px); }
+        .drop-zone-3 { transform: translate(105px, 0px); }
+        .drop-zone-4 { transform: translate(94px, 54px); }
+        .drop-zone-5 { transform: translate(54px, 94px); }
+        .drop-zone-6 { transform: translate(0px, 105px); }
+        .drop-zone-7 { transform: translate(-54px, 94px); }
+        .drop-zone-8 { transform: translate(-94px, 54px); }
+        .drop-zone-9 { transform: translate(-105px, 0px); }
+        .drop-zone-10 { transform: translate(-94px, -54px); }
+        .drop-zone-11 { transform: translate(-54px, -94px); }
+        .drop-zone-12 { transform: translate(0px, -105px); }
+
+
+        #options-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            z-index: 1;
+            padding-bottom: 20px;
+            min-height: 80px;
+        }
+
+        .option-btn, .number-option {
+            padding: 15px 25px;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background-color: var(--button-bg);
+            color: var(--clock-border-color);
+            box-shadow: 0 4px #c89400;
+            transition: all 0.1s ease-in-out;
+        }
+
+        .option-btn:hover, .number-option:hover {
+            background-color: var(--button-hover-bg);
+        }
+
+        .option-btn:active, .number-option:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #c89400;
+        }
+        
+        #start-btn {
+            font-size: 2em;
+            padding: 20px 40px;
+        }
+
+        @media (max-width: 600px) {
+            #clock-container {
+                width: 200px;
+                height: 200px;
+                border-width: 8px;
+            }
+
+            .drop-zone {
+                width: 30px;
+                height: 30px;
+                font-size: 1.2em;
+                border-width: 1px;
+            }
+
+            .drop-zone-1 { transform: translate(43px, -75px); }
+            .drop-zone-2 { transform: translate(75px, -43px); }
+            .drop-zone-3 { transform: translate(84px, 0px); }
+            .drop-zone-4 { transform: translate(75px, 43px); }
+            .drop-zone-5 { transform: translate(43px, 75px); }
+            .drop-zone-6 { transform: translate(0px, 84px); }
+            .drop-zone-7 { transform: translate(-43px, 75px); }
+            .drop-zone-8 { transform: translate(-75px, 43px); }
+            .drop-zone-9 { transform: translate(-84px, 0px); }
+            .drop-zone-10 { transform: translate(-75px, -43px); }
+            .drop-zone-11 { transform: translate(-43px, -75px); }
+            .drop-zone-12 { transform: translate(0px, -84px); }
+
+            #hour-hand {
+                width: 6px;
+                height: 50px;
+                top: 50px;
+            }
+
+            #minute-hand {
+                width: 4px;
+                height: 75px;
+                top: 25px;
+            }
+
+            #bird {
+                width: 80px;
+            }
+
+            #speech-bubble {
+                font-size: 1em;
+                padding: 8px 12px;
+            }
+
+            .option-btn, .number-option {
+                padding: 10px 15px;
+                font-size: 1.2em;
+            }
+
+            #start-btn {
+                font-size: 1.5em;
+                padding: 15px 30px;
+            }
+
+            #level-display {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="game-container">
+            <div id="top-bar">
+                <div id="level-display">Level {{ level }}</div>
+                <div id="score-display">Score: {{ score }}</div>
+            </div>
+            <div id="bird-container">
+                <div id="speech-bubble" :class="{ visible: speechBubble.visible }">{{ speechBubble.text }}</div>
+                <img src="./cute-bird.svg" atl="Cute Bird" width="20%">
+            	<div id="clock-container">
+                <template v-if="level > 4">
+                    <div id="hour-hand" class="clock-hand" :style="{ transform: hourHandRotation }"></div>
+                    <div id="minute-hand" class="clock-hand" :style="{ transform: minuteHandRotation }"></div>
+                </template>
+                 <div v-for="n in 12" :key="n" 
+                     :class="['drop-zone', `drop-zone-${n}`, { 'drag-over': dragOverZone === n, 'correct': placedNumbers[n] === n }]"
+                     @dragover.prevent="dragOver(n)"
+                     @dragleave.prevent="dragLeave"
+                     @drop.prevent="drop(n)">
+                    <span v-if="placedNumbers[n]">{{ placedNumbers[n] }}</span>
+                </div>
+            </div>
+        </div>
+        <div id="options-container">
+             <button v-if="!gameStarted" @click="startGame" id="start-btn" class="option-btn">Start Game</button>
+             <template v-else-if="level <= 4">
+                <div v-for="num in numberOptions" :key="num"
+                     class="number-option"
+                     draggable="true"
+                     @dragstart="dragStart(num, $event)">
+                    {{ num }}
+                </div>
+             </template>
+             <template v-else>
+                <button v-for="option in options" :key="option" @click="checkAnswer(option, $event)" class="option-btn">{{ option }}</button>
+             </template>
+        </div>
+        <div id="grass"></div>
+        <svg id="correct-star" style="position: absolute; top: 50%; left: 50%; width: 100px; height: 100px; transform: translate(-50%, -50%) scale(0); transition: transform 0.5s; display: none; z-index: 10;" viewBox="0 0 100 100">
+            <polygon points="50,0 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35" fill="#FFD700"/>
+        </svg>
+    </div>
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const level = ref(1);
+                const score = ref(0);
+                const gameStarted = ref(false);
+                const speechBubble = ref({ text: 'What time is it?', visible: false });
+                const hourHandRotation = ref('rotate(0deg)');
+                const minuteHandRotation = ref('rotate(0deg)');
+                const options = ref([]);
+                const correctTime = ref(null);
+                const isBusy = ref(true);
+
+                const numberOptions = ref([]);
+                const placedNumbers = ref({});
+                const numbersToPlace = ref([]);
+                const dragOverZone = ref(null);
+
+
+                const synth = window.speechSynthesis;
+                let voices = [];
+
+                const levels = [
+                    { level: 1, type: 'place-numbers', count: 1 },
+                    { level: 2, type: 'place-numbers', count: 2 },
+                    { level: 3, type: 'place-numbers', count: 3 },
+                    { level: 4, type: 'place-numbers', count: 12 },
+                    { level: 5, type: 'hour', questions: 5 },
+                    { level: 6, type: 'half-hour', questions: 7 },
+                    { level: 7, type: 'quarter-hour', questions: 10 },
+                    { level: 8, type: 'any', questions: 15 },
+                ];
+
+                let gameState = {
+                    question: 0,
+                };
+
+                function populateVoiceList() {
+                    if(typeof synth === 'undefined') {
+                        return;
+                    }
+                    voices = synth.getVoices();
+                }
+
+                function speak(text, onEndCallback) {
+                    if (synth.speaking) {
+                        synth.cancel();
+                    }
+                    const utterThis = new SpeechSynthesisUtterance(text);
+                    utterThis.onend = () => {
+                        if(onEndCallback) onEndCallback();
+                    };
+                    utterThis.onerror = (event) => {
+                        if (event.error !== 'interrupted') {
+                            console.error('SpeechSynthesisUtterance.onerror', event);
+                        }
+                    };
+                    const childVoice = voices.find(voice => voice.name.includes('Google UK English Female') || voice.name.includes('Female'));
+                    if(childVoice) utterThis.voice = childVoice;
+                    utterThis.pitch = 1.2;
+                    utterThis.rate = 0.9;
+                    synth.speak(utterThis);
+                }
+
+                function showSpeechBubble(text, duration = 3000) {
+                    speechBubble.value.text = text;
+                    speechBubble.value.visible = true;
+                    setTimeout(() => speechBubble.value.visible = false, duration);
+                }
+
+                function hideSpeechBubble() {
+                    speechBubble.value.visible = false;
+                }
+
+                function updateClock(hour, minute) {
+                    const minuteDeg = (minute / 60) * 360;
+                    const hourDeg = ((hour % 12) / 12) * 360 + (minute / 60) * 30;
+                    minuteHandRotation.value = `rotate(${minuteDeg}deg)`;
+                    hourHandRotation.value = `rotate(${hourDeg}deg)`;
+                }
+
+                function formatTime(hour, minute) {
+                    const h = hour % 12 === 0 ? 12 : hour % 12;
+                    const m = minute < 10 ? `0${minute}` : minute;
+                    return `${h}:${m}`;
+                }
+
+                function generateTime() {
+                    let hour, minute;
+                    const levelInfo = levels[level.value - 1];
+
+                    switch (levelInfo.type) {
+                        case 'hour':
+                            hour = Math.floor(Math.random() * 12) + 1;
+                            minute = 0;
+                            break;
+                        case 'half-hour':
+                            hour = Math.floor(Math.random() * 12) + 1;
+                            minute = Math.random() < 0.5 ? 0 : 30;
+                            break;
+                        case 'quarter-hour':
+                            hour = Math.floor(Math.random() * 12) + 1;
+                            minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+                            break;
+                        case 'any':
+                            hour = Math.floor(Math.random() * 12) + 1;
+                            minute = Math.floor(Math.random() * 12) * 5;
+                            break;
+                    }
+                    return { hour, minute };
+                }
+
+                function generateOptions() {
+                    const opts = new Set();
+                    opts.add(correctTime.value);
+
+                    while (opts.size < 4) {
+                        const { hour, minute } = generateTime();
+                        opts.add(formatTime(hour, minute));
+                    }
+
+                    options.value = [...opts].sort(() => Math.random() - 0.5);
+                }
+
+                function setupNumberPlacementLevel() {
+                    const levelInfo = levels[level.value - 1];
+                    placedNumbers.value = {};
+                    
+                    const allNumbers = Array.from({length: 12}, (_, i) => i + 1);
+                    numbersToPlace.value = allNumbers.sort(() => 0.5 - Math.random()).slice(0, levelInfo.count);
+                    numberOptions.value = [...numbersToPlace.value].sort(() => 0.5 - Math.random());
+
+                    showSpeechBubble(`Place the number${levelInfo.count > 1 ? 's' : ''} on the clock!`);
+                    speak(`Let's place the number${levelInfo.count > 1 ? 's' : ''} on the clock!`);
+                }
+
+                function nextQuestion() {
+                    isBusy.value = true;
+                    const currentLevelInfo = levels[level.value - 1];
+
+                    if (currentLevelInfo.type.startsWith('place-numbers')) {
+                        setupNumberPlacementLevel();
+                        isBusy.value = false;
+                        return;
+                    }
+
+                    if (gameState.question >= currentLevelInfo.questions) {
+                        levelUp();
+                        return;
+                    }
+
+                    gameState.question++;
+                    const { hour, minute } = generateTime();
+                    correctTime.value = formatTime(hour, minute);
+
+                    updateClock(hour, minute);
+                    generateOptions();
+                    
+                    showSpeechBubble("What time is it?");
+                    speak("What time is it?", () => {
+                        isBusy.value = false;
+                    });
+                }
+                
+                function levelUp() {
+                    score.value += 100; // Add 100 points for leveling up
+                    if (level.value < levels.length) {
+                        level.value++;
+                        gameState.question = 0;
+                        const msg = `Great job! Welcome to level ${level.value}!`;
+                        showSpeechBubble(msg);
+                        speak(msg, () => setTimeout(nextQuestion, 1000));
+                    } else {
+                        const msg = "Wow! You finished all the levels! You're a clock master!";
+                        showSpeechBubble(msg);
+                        speak(msg);
+                        gameStarted.value = false;
+                    }
+                }
+
+                function showCorrectStar() {
+                    const star = document.getElementById('correct-star');
+                    star.style.display = 'block';
+                    star.style.transform = 'translate(-50%, -50%) scale(1)';
+                    setTimeout(() => {
+                        star.style.transform = 'translate(-50%, -50%) scale(0)';
+                        setTimeout(() => {
+                            star.style.display = 'none';
+                        }, 500);
+                    }, 1000);
+                }
+
+                function checkAnswer(selectedTime, event) {
+                    if (isBusy.value) return;
+                    isBusy.value = true;
+
+                    const btn = event.target;
+
+                    if (selectedTime === correctTime.value) {
+                        score.value += 10; // Add 10 points for a correct answer
+                        btn.style.backgroundColor = 'var(--correct-color)';
+                        showSpeechBubble("Correct!");
+                        speak("Correct!", () => {
+                            showCorrectStar();
+                            setTimeout(() => {
+                                btn.style.backgroundColor = 'var(--button-bg)';
+                                nextQuestion();
+                            }, 1500);
+                        });
+                    } else {
+                        btn.style.backgroundColor = 'var(--incorrect-color)';
+                        showSpeechBubble("Try again!");
+                        speak("Try again!", () => {
+                            btn.style.backgroundColor = 'var(--button-bg)';
+                            isBusy.value = false;
+                        });
+                    }
+                }
+
+                function startGame() {
+                    gameStarted.value = true;
+                    level.value = 1;
+                    gameState.question = 0;
+                    speak("Let's learn the time!", () => {
+                         isBusy.value = false;
+                         nextQuestion();
+                    });
+                }
+                
+                function dragStart(number, event) {
+                    event.dataTransfer.setData("text/plain", number);
+                    event.dataTransfer.effectAllowed = "move";
+                }
+
+                function dragOver(zoneNumber) {
+                    if (!placedNumbers.value[zoneNumber]) {
+                        dragOverZone.value = zoneNumber;
+                    }
+                }
+
+                function dragLeave() {
+                    dragOverZone.value = null;
+                }
+
+                function drop(zoneNumber) {
+                    if (placedNumbers.value[zoneNumber]) {
+                        dragOverZone.value = null;
+                        return;
+                    }
+                    
+                    const droppedNumber = parseInt(event.dataTransfer.getData("text/plain"));
+                    dragOverZone.value = null;
+
+                    if (droppedNumber === zoneNumber) {
+                        placedNumbers.value[zoneNumber] = droppedNumber;
+                        numberOptions.value = numberOptions.value.filter(n => n !== droppedNumber);
+                        speak(droppedNumber);
+
+                        const allPlaced = numbersToPlace.value.every(num => placedNumbers.value[num] === num);
+                        if (allPlaced) {
+                            score.value += 50; // Add 50 points for completing the level
+                            showSpeechBubble("Well done!");
+                            speak("Well done!", () => {
+                                showCorrectStar();
+                                setTimeout(levelUp, 1500);
+                            });
+                        }
+                    } else {
+                        showSpeechBubble("Oops, wrong spot!");
+                        speak("Oops, wrong spot!");
+                    }
+                }
+
+
+                onMounted(() => {
+                    populateVoiceList();
+                    if (typeof synth !== 'undefined' && synth.onvoiceschanged !== undefined) {
+                        synth.onvoiceschanged = populateVoiceList;
+                    }
+                });
+
+                return {
+                    level,
+                    score,
+                    gameStarted,
+                    speechBubble,
+                    hourHandRotation,
+                    minuteHandRotation,
+                    options,
+                    startGame,
+                    checkAnswer,
+                    dragStart,
+                    numberOptions,
+                    placedNumbers,
+                    dragOverZone,
+                    dragOver,
+                    dragLeave,
+                    drop
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
