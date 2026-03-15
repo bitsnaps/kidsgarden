@@ -76,13 +76,15 @@ createApp({
 
         function updateSunMoon(hour) {
             const sun = document.getElementById('sun');
+            const bird = document.getElementById('bird');
             const moon = document.getElementById('moon');
             const moonCutout = document.getElementById('moon-cutout');
             const app = document.getElementById('app');
-
+            
             let newBgColor;
 
             if (level.value >= 5) {
+                bird.style.display = 'none';
                 if (hour >= 6 && hour < 18) { // Day time (6 AM to 6 PM)
                     sun.style.display = 'block';
                     moon.style.display = 'none';
@@ -93,6 +95,7 @@ createApp({
                     newBgColor = '#2C3E50'; // Dark Blue/Night Sky
                 }
             } else {
+                bird.style.display = 'block';
                 sun.style.display = 'none';
                 moon.style.display = 'none';
                 newBgColor = '#87CEEB'; // Default Sky Blue

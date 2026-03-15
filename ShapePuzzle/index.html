@@ -1,118 +1,324 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf8"/>
-  <title>AlphaPuzzle</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shape Puzzle - Kids Garden</title>
   <link rel="stylesheet" href="../css/bulma.min.css">
-<style>
-.box {
-  cursor: pointer;
-  width: 200px;
-  height: 200px;
-}
+  <style>
+    :root {
+      --bg-color: #f0f4f8;
+      --card-bg: #ffffff;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --accent-color: #ff6b6b;
+      --success-color: #51cf66;
+    }
 
-.box span {
-  display: block;
-}
+    body {
+      background-color: var(--bg-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-.column .box {
-  margin-bottom: 1rem;
-}
-</style>
+    .game-container {
+      flex: 1;
+      padding: 2rem 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .title-section {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .shapes-bin {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      background: var(--card-bg);
+      border-radius: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+
+    .puzzle-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 1.5rem;
+      border: 3px dashed #cbd5e0;
+    }
+
+    .shape-item {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      transition: transform 0.2s, filter 0.2s;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .shape-item.selected {
+      border: 3px solid var(--accent-color);
+      border-radius: 1rem;
+      background: rgba(255, 107, 107, 0.1);
+      transform: scale(1.1);
+    }
+
+    .shape-item:active {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+
+    .shape-item.matched {
+      opacity: 0.3;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .drop-zone {
+      width: 120px;
+      height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #e2e8f0;
+      border-radius: 1rem;
+      transition: background-color 0.3s;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .drop-zone.hovered {
+      background: #cbd5e0;
+    }
+
+    .drop-zone.target-selected {
+      box-shadow: 0 0 10px var(--accent-color);
+      background: #fdf2f2;
+    }
+
+    .drop-zone svg {
+      width: 80px;
+      height: 80px;
+      filter: grayscale(1) opacity(0.2);
+    }
+
+    .drop-zone.matched {
+      background: #d3f9d8;
+      border: 2px solid #51cf66;
+    }
+
+    .drop-zone.matched svg {
+      filter: none;
+      opacity: 1;
+    }
+
+    .shape-label {
+      margin-top: 0.5rem;
+      font-weight: bold;
+      color: #4a5568;
+      font-size: 0.8rem;
+    }
+
+    .score-badge {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+    }
+
+    .btn-reset {
+      margin-top: 2rem;
+    }
+
+    [v-cloak] { display: none; }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      .shape-item { width: 80px; height: 80px; }
+      .drop-zone { width: 100px; height: 100px; }
+      .drop-zone svg { width: 60px; height: 60px; }
+      .shapes-bin, .puzzle-grid { padding: 1rem; gap: 1rem; }
+    }
+  </style>
 </head>
 <body>
-<div id="app">  
-  <div class="container">
-    <section class="section">
-      <h1 class="title">Shape Puzzle Game</h1>      
-      <div class="columns">
-        <!-- Info -->
-        <div class="column">
-          <h2 class="subtitle">Score: {{ score }}</h2>
-          <p>Drag and drop the right shape!</p>    
+  <div id="app" v-cloak>
+    <div class="game-container">
+      <div class="title-section">
+        <h1 class="title is-2 has-text-primary">Shape Puzzle</h1>
+        <div class="score-badge">Score: {{ score }}</div>
+        <p class="subtitle is-5">Drag each shape to its matching shadow!</p>
+      </div>
+
+      <!-- Shapes to drag -->
+      <div class="shapes-bin">
+        <div 
+          v-for="shape in shuffledShapes" 
+          :key="shape.id"
+          class="shape-item"
+          :class="{ matched: isMatched(shape.id), selected: selectedId === shape.id }"
+          draggable="true"
+          @dragstart="onDragStart($event, shape)"
+          @click="selectShape(shape.id)"
+        >
+          <svg viewBox="0 0 100 100" v-html="shape.path" :fill="shape.color"></svg>
         </div>
       </div>
-      <div class="columns">
-        <!-- Draggable Shapes -->
-        <div class="column">
-          <h3 class="title is-4">Shapes</h3>
-          <div
-            v-for="(shape, index) in shapes"
-            :key="shape.name"
-            class="box has-text-centered"
-            draggable="true"
-            @dragstart="onDragStart($event, shape)"
-          >
-            <span :style="{ color: shape.color, fontSize: '4rem' }">
-              {{ shape.symbol }}
-            </span>
-            <p>{{ shape.name }}</p>
-          </div>
-        </div>
-        
-        <!-- Drop Zones -->
-        <div class="column">
-          <h3 class="title is-4">Match the Shapes</h3>
-          <div
-            v-for="(spot, index) in spots"
-            :key="spot.name"
-            class="box has-text-centered"
-            @dragover.prevent
-            @drop="onDrop($event, spot)"
-          >
-            <span :style="{ fontSize: '4rem', color: spot.shape?.color || 'black' }">
-              {{ spot.matched ? spot.shape.symbol : '?' }}
-            </span>
-            <p>{{ spot.name }}</p>
-          </div>
+
+      <!-- Puzzle Grid (Targets) -->
+      <div class="puzzle-grid">
+        <div 
+          v-for="target in targets" 
+          :key="target.id"
+          class="drop-zone"
+          :class="{ hovered: hoverId === target.id, matched: isMatched(target.id), 'target-selected': selectedId }"
+          @dragover.prevent="onDragOver(target.id)"
+          @dragleave="onDragLeave"
+          @drop="onDrop($event, target.id)"
+          @click="handleTargetClick(target.id)"
+        >
+          <svg viewBox="0 0 100 100" v-html="target.path" :fill="target.color"></svg>
+          <div class="shape-label">{{ target.name }}</div>
         </div>
       </div>
-      
-    </section>
+
+      <div class="has-text-centered">
+        <button v-if="gameWon" @click="resetGame" class="button is-primary is-large btn-reset">
+          Play Again!
+        </button>
+      </div>
+    </div>
   </div>
 
-<script src="../js/js-confetti.browser.js"></script>
-<script src="../js/vue.global.prod.js"></script>
-<script>
-const jsConfetti = new JSConfetti();
+  <script src="../js/js-confetti.browser.js"></script>
+  <script src="../js/vue.global.prod.js"></script>
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
 
-Vue.createApp({
-  data() {
-    return {
-      score: 0,
-      shapes: [
-        { name: 'Circle', symbol: '◯', color: 'red' },
-        { name: 'Square', symbol: '■', color: 'green' },
-        { name: 'Triangle', symbol: '▲', color: 'blue' },
-      ],
-      spots: [
-        { name: 'Place for Circle', shapeName: 'Circle', matched: false, shape: null },
-        { name: 'Place for Square', shapeName: 'Square', matched: false, shape: null },
-        { name: 'Place for Triangle', shapeName: 'Triangle', matched: false, shape: null },
-      ],
-      draggingShape: null,
-    };
-  },
-  methods: {
-    onDragStart(event, shape) {
-      this.draggingShape = shape;
-    },
-    onDrop(event, spot) {
-      if (this.draggingShape && !spot.matched) {
-        if (this.draggingShape.name === spot.shapeName) {
-          spot.matched = true;
-          spot.shape = this.draggingShape;
-          this.score += 10;
-        }
+    const SHAPES_DATA = [
+      { id: 'circle', name: 'Circle', color: '#ff6b6b', path: '<circle cx="50" cy="50" r="40"/>' },
+      { id: 'square', name: 'Square', color: '#4dabf7', path: '<rect x="15" y="15" width="70" height="70" rx="8"/>' },
+      { id: 'triangle', name: 'Triangle', color: '#51cf66', path: '<path d="M50 15 L85 85 L15 85 Z"/>' },
+      { id: 'star', name: 'Star', color: '#fcc419', path: '<path d="M50 10 L61 40 L93 40 L67 59 L77 90 L50 71 L23 90 L33 59 L7 40 L39 40 Z"/>' },
+      { id: 'heart', name: 'Heart', color: '#ff8787', path: '<path d="M50 88 C20 70 5 45 5 28 C5 15 15 5 28 5 C38 5 45 10 50 18 C55 10 62 5 72 5 C85 5 95 15 95 28 C95 45 80 70 50 88 Z"/>' },
+      { id: 'diamond', name: 'Diamond', color: '#be4bdb', path: '<path d="M50 10 L90 50 L50 90 L10 50 Z"/>' }
+    ];
+
+    createApp({
+      setup() {
+        const score = ref(0);
+        const matchedIds = ref(new Set());
+        const shuffledShapes = ref([]);
+        const targets = ref([...SHAPES_DATA]);
+        const draggingId = ref(null);
+        const selectedId = ref(null);
+        const hoverId = ref(null);
+        const successSound = new Audio('../mp3/success.wav');
+        const jsConfetti = new JSConfetti();
+
+        const gameWon = computed(() => matchedIds.value.size === SHAPES_DATA.length);
+
+        const shuffle = (array) => {
+          return array.sort(() => Math.random() - 0.5);
+        };
+
+        const resetGame = () => {
+          score.value = 0;
+          matchedIds.value.clear();
+          selectedId.value = null;
+          shuffledShapes.value = shuffle([...SHAPES_DATA]);
+          // Also shuffle targets slightly to make it different
+          targets.value = shuffle([...SHAPES_DATA]);
+        };
+
+        const onDragStart = (event, shape) => {
+          draggingId.value = shape.id;
+          selectedId.value = shape.id;
+          event.dataTransfer.setData('text/plain', shape.id);
+        };
+
+        const selectShape = (id) => {
+          if (!matchedIds.value.has(id)) {
+            selectedId.value = (selectedId.value === id) ? null : id;
+          }
+        };
+
+        const onDragOver = (id) => {
+          if (!matchedIds.value.has(id)) {
+            hoverId.value = id;
+          }
+        };
+
+        const onDragLeave = () => {
+          hoverId.value = null;
+        };
+
+        const onDrop = (event, targetId) => {
+          hoverId.value = null;
+          const droppedId = event.dataTransfer ? event.dataTransfer.getData('text/plain') : null;
+          handleMatch(droppedId || draggingId.value || selectedId.value, targetId);
+        };
+
+        const handleTargetClick = (targetId) => {
+          if (selectedId.value) {
+            handleMatch(selectedId.value, targetId);
+          }
+        };
+
+        const handleMatch = (sourceId, targetId) => {
+          if (sourceId === targetId && !matchedIds.value.has(targetId)) {
+            matchedIds.value.add(targetId);
+            score.value += 10;
+            selectedId.value = null;
+            draggingId.value = null;
+            
+            if (matchedIds.value.size === SHAPES_DATA.length) {
+              jsConfetti.addConfetti();
+              successSound.play().catch(e => console.log("Audio play blocked", e));
+            }
+          } else if (sourceId && sourceId !== targetId) {
+            // Shake effect or feedback could go here
+            selectedId.value = null;
+          }
+        };
+
+        const isMatched = (id) => matchedIds.value.has(id);
+
+        onMounted(() => {
+          resetGame();
+        });
+
+        return {
+          score,
+          shuffledShapes,
+          targets,
+          hoverId,
+          gameWon,
+          onDragStart,
+          onDragOver,
+          onDragLeave,
+          onDrop,
+          handleTargetClick,
+          selectShape,
+          isMatched,
+          resetGame
+        };
       }
-      this.draggingShape = null;
-      if (this.score == 30){
-        jsConfetti.addConfetti();
-      }
-    },
-  },
-}).mount('#app');
-</script>
+    }).mount('#app');
+  </script>
 </body>
-
 </html>

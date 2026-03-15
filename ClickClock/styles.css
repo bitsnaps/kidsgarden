@@ -77,21 +77,21 @@ body, html {
     margin-bottom: 10px;
 }
 
-#sun-moon-container {
+/* #sun-moon-container {
     position: absolute;
     top: 20px;
     right: 20px;
     width: 80px;
     height: 80px;
     z-index: 5;
-}
+} */
 
-#bird-container {
+#svg-container {
     position: relative;
     margin-bottom: 20px;
 }
 
-#bird {
+#bird, #moon, #sun {
     width: 100px;
     height: auto;
 }
